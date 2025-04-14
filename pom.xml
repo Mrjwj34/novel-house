@@ -5,7 +5,7 @@
     <modules>
 <!--        <module>novel-monitor</module>-->
 <!--        <module>novel-book</module>-->
-<!--        <module>novel-core</module>-->
+        <module>novel-core</module>
 <!--        <module>novel-search</module>-->
 <!--        <module>novel-gateway</module>-->
 <!--        <module>novel-resource</module>-->
