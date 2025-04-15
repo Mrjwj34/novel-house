@@ -6,7 +6,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.jwj.novelconfig.Exception.BusinessException;
+import org.jwj.novelconfig.exception.BusinessException;
 import org.jwj.novelconfig.annotation.Key;
 import org.jwj.novelconfig.annotation.Lock;
 import org.redisson.api.RLock;

@@ -1,4 +1,4 @@
-package org.jwj.novelconfig.Exception;
+package org.jwj.novelconfig.exception;
 
 
 import lombok.Data;
