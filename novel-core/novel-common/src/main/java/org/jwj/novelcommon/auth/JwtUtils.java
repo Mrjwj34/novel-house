@@ -1,15 +1,13 @@
 package org.jwj.novelcommon.auth;
 
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.Objects;
 
 @UtilityClass
@@ -33,9 +31,12 @@ public class JwtUtils {
      * @return
      */
     public String generateToken(Long uid, String systemKey) {
+        Date expirationDate = new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 7); // 设置过期时间为7天
         return Jwts.builder()
                 .setHeaderParam(HEADER_SYSTEM_KEY, systemKey)
                 .setSubject(uid.toString())
+                .setIssuedAt(new Date()) // 设置签发时间 (可选)
+                .setExpiration(expirationDate) // 设置过期时间 (必需)
                 .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8)))
                 .compact();
     }
@@ -61,9 +62,12 @@ public class JwtUtils {
             } else {
                 log.error("JWT系统标识不匹配");
             }
-        } catch (JwtException e) {
-            // JWT令牌不可用
-            log.error("JWT解析失败:{}", token);
+        } catch (ExpiredJwtException e) {
+            // JWT令牌过期
+            log.error("JWT令牌过期:{}", token);
+        } catch (Exception e) {
+            // 其他异常
+            log.error("JWT解析异常:{}", e.getMessage());
         }
         return null;
     }
