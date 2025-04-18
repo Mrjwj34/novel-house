@@ -1,0 +1,36 @@
+server:
+  port: 9040
+spring:
+  profiles:
+    include: common
+    active: dev
+  servlet:
+    multipart:
+      # 上传文件最大大小
+      max-file-size: 5MB
+  web:
+    resources:
+      # 静态资源位置，指向存储 image 目录的父目录
+      # 使用 novel.file.upload.path 属性动态配置
+      static-locations: classpath:/META-INF/resources/,classpath:/resources/,classpath:/static/,classpath:/public/,file:${novel.file.upload.path}/
+      # 可选：配置缓存策略 (示例，可以根据需要调整)
+      cache:
+        period: P10D # 缓存 10 天 (Period 10 Days)，Spring Boot 会自动生成 Last-Modified 和 ETag
+        cachecontrol:
+          max-age: P10D # 设置 Cache-Control 的 max-age
+
+novel:
+  file:
+    # 文件上传配置
+    upload:
+      # 上传路径
+      path: ${file_upload_path:/Users/xiongxiaoyang/upload}
+
+management:
+  # 端点启用配置
+  endpoint:
+    logfile:
+      # 启用返回日志文件内容的端点
+      enabled: true
+      # 外部日志文件路径
+      external-file: logs/novel-resource-service.log

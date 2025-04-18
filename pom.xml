@@ -8,7 +8,7 @@
         <module>novel-core</module>
 <!--        <module>novel-search</module>-->
 <!--        <module>novel-gateway</module>-->
-<!--        <module>novel-resource</module>-->
+        <module>novel-resource</module>
 <!--        <module>novel-news</module>-->
 <!--        <module>novel-author</module>-->
         <module>novel-user</module>
