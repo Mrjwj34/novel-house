@@ -62,7 +62,7 @@ public class CacheConfig {
             connectionFactory);
 
         RedisCacheConfiguration defaultCacheConfig = RedisCacheConfiguration.defaultCacheConfig()
-            .disableCachingNullValues() // 禁止了空值缓存(我觉得这样不利于应对缓存穿透的情况)
+//            .disableCachingNullValues() // 禁止了空值缓存(我觉得这样不利于应对缓存穿透的情况)
             .prefixCacheNameWith(CacheConsts.REDIS_CACHE_PREFIX);
 
         Map<String, RedisCacheConfiguration> cacheMap = new LinkedHashMap<>(
@@ -85,7 +85,7 @@ public class CacheConfig {
 
         RedisCacheManager redisCacheManager = new RedisCacheManager(redisCacheWriter,
             defaultCacheConfig, cacheMap);
-        // 启用事务感知, 对于微服务项目,
+        // 启用事务感知, 但是对于微服务项目,
         // 如果mysql与使用事务的服务不在一个容器/服务器内,
         // 这里的事务感知应该不会生效
         redisCacheManager.setTransactionAware(true);
