@@ -2,12 +2,15 @@ package org.jwj.novelbookservice.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jwj.novelbookapi.dto.req.*;
 import org.jwj.novelbookapi.dto.resp.*;
 import org.jwj.novelbookservice.dao.entity.BookChapter;
 import org.jwj.novelbookservice.dao.entity.BookComment;
+import org.jwj.novelbookservice.dao.entity.BookContent;
 import org.jwj.novelbookservice.dao.entity.BookInfo;
 import org.jwj.novelbookservice.dao.mapper.BookChapterMapper;
 import org.jwj.novelbookservice.dao.mapper.BookCommentMapper;
@@ -19,6 +22,7 @@ import org.jwj.novelbookservice.manager.feign.UserFeignManager;
 import org.jwj.novelbookservice.service.BookService;
 import org.jwj.novelcommon.auth.UserHolder;
 import org.jwj.novelcommon.constants.DatabaseConsts;
+import org.jwj.novelcommon.constants.ErrorCodeEnum;
 import org.jwj.novelcommon.resp.PageRespDto;
 import org.jwj.novelcommon.resp.RestResp;
 import org.jwj.novelconfig.annotation.Key;
@@ -27,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.function.Function;
@@ -289,36 +294,164 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public RestResp<Void> saveComment(@Key(expr = "#{userId + '::' + bookId}") BookCommentReqDto dto) {
-        return null;
+        // 校验用户是否已经发表过评论
+        LambdaQueryWrapper<BookComment> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BookComment::getUserId, dto.getUserId())
+                .eq(BookComment::getBookId, dto.getBookId());
+        if (bookCommentMapper.selectCount(wrapper) > 0) {
+            // 用户已发表评论
+            return RestResp.fail(ErrorCodeEnum.USER_COMMENTED);
+        }
+        // 为发表过评论则插入评论
+        BookComment bookComment = new BookComment();
+        bookComment.setBookId(dto.getBookId());
+        bookComment.setUserId(dto.getUserId());
+        bookComment.setCommentContent(dto.getCommentContent());
+        bookComment.setCreateTime(LocalDateTime.now());
+        bookComment.setUpdateTime(LocalDateTime.now());
+        bookCommentMapper.insert(bookComment);
+        return RestResp.ok();
     }
 
     @Override
     public RestResp<Void> updateComment(BookCommentReqDto dto) {
-        return null;
+        QueryWrapper<BookComment> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(DatabaseConsts.CommonColumnEnum.ID.getName(), dto.getCommentId())
+                .eq(DatabaseConsts.BookCommentTable.COLUMN_USER_ID, dto.getUserId());
+        BookComment bookComment = new BookComment();
+        bookComment.setCommentContent(dto.getCommentContent());
+        bookCommentMapper.update(bookComment, queryWrapper);
+        return RestResp.ok();
     }
 
     @Override
     public RestResp<Void> deleteComment(BookCommentReqDto dto) {
-        return null;
+        QueryWrapper<BookComment> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(DatabaseConsts.CommonColumnEnum.ID.getName(), dto.getCommentId())
+                .eq(DatabaseConsts.BookCommentTable.COLUMN_USER_ID, dto.getUserId());
+        bookCommentMapper.delete(queryWrapper);
+        return RestResp.ok();
     }
 
     @Override
     public RestResp<Void> saveBook(BookAddReqDto dto) {
-        return null;
+        // 校验小说名是否重复
+        LambdaQueryWrapper<BookInfo> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BookInfo::getBookName, dto.getBookName());
+        if(bookInfoMapper.selectCount(wrapper) > 0) {
+            return RestResp.fail(ErrorCodeEnum.AUTHOR_BOOK_NAME_EXIST);
+        }
+        BookInfo bookInfo = new BookInfo();
+        // 设置作家信息
+        bookInfo.setAuthorId(dto.getAuthorId());
+        bookInfo.setAuthorName(dto.getPenName());
+        // 设置其他信息
+        bookInfo.setWorkDirection(dto.getWorkDirection());
+        bookInfo.setCategoryId(dto.getCategoryId());
+        bookInfo.setCategoryName(dto.getCategoryName());
+        bookInfo.setBookName(dto.getBookName());
+        bookInfo.setPicUrl(dto.getPicUrl());
+        bookInfo.setBookDesc(dto.getBookDesc());
+        bookInfo.setIsVip(dto.getIsVip());
+        bookInfo.setScore(0);
+        bookInfo.setCreateTime(LocalDateTime.now());
+        bookInfo.setUpdateTime(LocalDateTime.now());
+        // 保存小说信息
+        bookInfoMapper.insert(bookInfo);
+        return RestResp.ok();
     }
 
     @Override
     public RestResp<PageRespDto<BookInfoRespDto>> listAuthorBooks(BookPageReqDto dto) {
-        return null;
+        IPage<BookInfo> page = new Page<>();
+        page.setCurrent(dto.getPageNum());
+        page.setSize(dto.getPageSize());
+        QueryWrapper<BookInfo> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(DatabaseConsts.BookTable.AUTHOR_ID, dto.getAuthorId())
+                .orderByDesc(DatabaseConsts.CommonColumnEnum.CREATE_TIME.getName());
+        IPage<BookInfo> bookInfoPage = bookInfoMapper.selectPage(page, queryWrapper);
+        return RestResp.ok(PageRespDto.of(dto.getPageNum(), dto.getPageSize(), page.getTotal(),
+                bookInfoPage.getRecords().stream().map(v -> BookInfoRespDto.builder()
+                        .id(v.getId())
+                        .bookName(v.getBookName())
+                        .picUrl(v.getPicUrl())
+                        .categoryName(v.getCategoryName())
+                        .wordCount(v.getWordCount())
+                        .visitCount(v.getVisitCount())
+                        .updateTime(v.getUpdateTime())
+                        .build()).toList()));
     }
 
     @Override
     public RestResp<Void> saveBookChapter(ChapterAddReqDto dto) {
-        return null;
+        // 1.校验该作品是否属于当前作家
+        BookInfo bookInfo = bookInfoMapper.selectById(dto.getBookId());
+        if(!Objects.equals(bookInfo.getAuthorId(), dto.getAuthorId())) {
+            return RestResp.fail(ErrorCodeEnum.USER_UN_AUTH);
+        }
+        // 2.保存章节信息到小说章节列表
+        // 2.1查询最新章节号
+        int chapterNum = 0;
+        LambdaQueryWrapper<BookChapter> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BookChapter::getBookId, dto.getBookId())
+                .orderByDesc(BookChapter::getChapterNum)
+                .last(DatabaseConsts.SqlEnum.LIMIT_1.getSql());
+        BookChapter bookChapter = bookChapterMapper.selectOne(wrapper);
+        if (bookChapter != null) {
+            chapterNum = bookChapter.getChapterNum() + 1;
+        }
+
+        //  2.2 设置章节相关信息并保存
+        BookChapter newBookChapter = new BookChapter();
+        newBookChapter.setBookId(dto.getBookId());
+        newBookChapter.setChapterName(dto.getChapterName());
+        newBookChapter.setChapterNum(chapterNum);
+        newBookChapter.setWordCount(dto.getChapterContent().length());
+        newBookChapter.setIsVip(dto.getIsVip());
+        newBookChapter.setCreateTime(LocalDateTime.now());
+        newBookChapter.setUpdateTime(LocalDateTime.now());
+        bookChapterMapper.insert(newBookChapter);
+
+        // 2.3 保存章节内容到小说内容表
+        BookContent bookContent = new BookContent();
+        bookContent.setContent(dto.getChapterContent());
+        bookContent.setChapterId(newBookChapter.getId());
+        bookContent.setCreateTime(LocalDateTime.now());
+        bookContent.setUpdateTime(LocalDateTime.now());
+        bookContentMapper.insert(bookContent);
+
+        // 2.4 更新小说表最新章节信息和小说总字数信息
+        // 2.4.1 更新小说表关于最新章节的信息
+        BookInfo newBookInfo = new BookInfo();
+        newBookInfo.setId(dto.getBookId());
+        newBookInfo.setLastChapterId(newBookChapter.getId());
+        newBookInfo.setLastChapterName(newBookChapter.getChapterName());
+        newBookInfo.setLastChapterUpdateTime(LocalDateTime.now());
+        newBookInfo.setWordCount(bookInfo.getWordCount() + newBookChapter.getWordCount());
+        newBookChapter.setUpdateTime(LocalDateTime.now());
+        bookInfoMapper.updateById(newBookInfo);
+        // 2.4.2 清除小说信息缓存
+        bookInfoCacheManager.evictBookInfoCache(dto.getBookId());
+        // 2.4.3 发送小说信息更新的 MQ 消息
+        amqpMsgManager.sendBookChangeMsg(dto.getBookId());
+        return RestResp.ok();
     }
 
     @Override
     public RestResp<PageRespDto<BookChapterRespDto>> listBookChapters(ChapterPageReqDto dto) {
-        return null;
+        Page<BookChapter> page = new Page<>();
+        page.setCurrent(dto.getPageNum());
+        page.setSize(dto.getPageSize());
+        LambdaQueryWrapper<BookChapter> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BookChapter::getBookId, dto.getBookId())
+                .orderByDesc(BookChapter::getChapterNum);
+        Page<BookChapter> bookChapterPage = bookChapterMapper.selectPage(page, wrapper);
+        return RestResp.ok(PageRespDto.of(dto.getPageNum(), dto.getPageSize(), page.getTotal(),
+                bookChapterPage.getRecords().stream().map(v -> BookChapterRespDto.builder()
+                        .id(v.getId())
+                        .chapterName(v.getChapterName())
+                        .chapterUpdateTime(v.getUpdateTime())
+                        .isVip(v.getIsVip())
+                        .build()).toList()));
     }
 }
