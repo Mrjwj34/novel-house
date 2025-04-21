@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: novel-gateway
+  cloud:
+    nacos:
+      config:
+        server-addr: ${nacos_host:127.0.0.1}:8848
+        file-extension: yml
+
+
