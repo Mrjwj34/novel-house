@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>novel-house</artifactId>
+        <groupId>org.jwj</groupId>
+        <version>2.0.0-SNAPSHOT</version> <!-- 确保版本与父项目一致 -->
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>novel-ai</artifactId>
+    <name>novel-ai</name>
+    <description>AI 写作助手模块 (Gemini)</description>
+
+    <properties>
+        <!-- 定义 Spring AI 版本 (如果父项目没有统一管理) -->
+        <spring-ai.version>1.0.0-M6</spring-ai.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- 统一管理 Spring AI 相关依赖 -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- Spring Boot Web Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring AI Gemini Starter -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- 引入项目通用配置模块 -->
+        <dependency>
+            <groupId>org.jwj</groupId>
+            <artifactId>novel-config</artifactId>
+            <version>2.0.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Validation API (通常已包含在 web starter 中，显式添加确保) -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+        </dependency>
+
+        <!-- SpringDoc OpenAPI (用于API文档) -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>novel-ai-service-${project.version}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

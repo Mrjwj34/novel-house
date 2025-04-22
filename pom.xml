@@ -13,6 +13,7 @@
         <module>novel-author</module>
         <module>novel-user</module>
         <module>novel-home</module>
+        <module>novel-ai</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>

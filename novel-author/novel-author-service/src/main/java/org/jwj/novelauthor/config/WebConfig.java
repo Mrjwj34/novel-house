@@ -1,8 +1,9 @@
 package org.jwj.novelauthor.config;
 
-import org.jwj.novel.common.constant.ApiRouterConsts;
-import org.jwj.novel.config.interceptor.TokenParseInterceptor;
+
 import lombok.RequiredArgsConstructor;
+import org.jwj.novelcommon.constants.ApiRouterConsts;
+import org.jwj.novelconfig.intercepptor.TokenParseInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;

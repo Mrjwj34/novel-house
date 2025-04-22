@@ -1,0 +1,33 @@
+server:
+  port: 9070 # 分配一个未使用的端口
+
+spring:
+  profiles:
+    # 包含通用配置
+    include: common
+    # 当前激活的配置 (例如 dev, prod)
+    active: dev
+  # Spring AI 相关配置
+  ai:
+    openai:
+      # !!! 必须配置你的 OpenAI API Key !!!
+      # 强烈建议通过环境变量或 Nacos 配置中心管理此 Key
+      api-key: ${OPENAI_API_KEY:YOUR_OPENAI_API_KEY} # 优先读取环境变量 OPENAI_API_KEY
+      # (可选) 如果你使用 Azure OpenAI 或其他代理，可以在这里配置 base-url
+      # base-url: https://your-proxy-or-azure-endpoint/
+      chat:
+        options:
+          # 使用的模型，例如 gpt-3.5-turbo, gpt-4, gpt-4o 等
+          model:
+          # 控制生成文本的随机性 (0.0 - 2.0)，值越高越随机
+          temperature: 0.7
+          # (可选) 其他 OpenAI 特定参数可以在这里添加
+          # max-tokens: 500
+          # top-p: 0.9
+
+management:
+  # 端点启用配置 (复用 novel-config 中的设置)
+  endpoint:
+    logfile:
+      enabled: true
+      external-file: logs/novel-ai-service.log # 指定日志文件路径

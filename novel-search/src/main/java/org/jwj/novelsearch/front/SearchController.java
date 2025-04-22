@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+
 /**
  * 前台门户-搜索模块 API 控制器
  *
@@ -34,7 +36,7 @@ public class SearchController {
     @Operation(summary = "小说搜索接口")
     @GetMapping("books")
     public RestResp<PageRespDto<BookInfoRespDto>> searchBooks(
-        @ParameterObject BookSearchReqDto condition) {
+        @ParameterObject BookSearchReqDto condition) throws IOException {
         return searchService.searchBooks(condition);
     }
 
